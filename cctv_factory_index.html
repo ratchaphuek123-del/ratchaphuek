@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Low-Poly CCTV Factory Digital Twin</title>
+
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+  <script>
+    AFRAME.registerComponent("factory-grid", {
+      schema: {
+        width: { type: "number", default: 36 },
+        depth: { type: "number", default: 14 },
+        step: { type: "number", default: 1 }
+      },
+      init: function () {
+        const data = this.data;
+        const color = "#8B9298";
+        for (let x = -data.width / 2; x <= data.width / 2; x += data.step) {
+          const line = document.createElement("a-box");
+          line.setAttribute("position", `${x} 0.006 0`);
+          line.setAttribute("width", 0.018);
+          line.setAttribute("height", 0.008);
+          line.setAttribute("depth", data.depth);
+          line.setAttribute("color", color);
+          this.el.appendChild(line);
+        }
+        for (let z = -data.depth / 2; z <= data.depth / 2; z += data.step) {
+          const line = document.createElement("a-box");
+          line.setAttribute("position", `0 0.007 ${z}`);
+          line.setAttribute("width", data.width);
+          line.setAttribute("height", 0.008);
+          line.setAttribute("depth", 0.018);
+          line.setAttribute("color", color);
+          this.el.appendChild(line);
+        }
+      }
+    });
+
+    AFRAME.registerComponent("safety-zone", {
+      schema: {
+        width: { type: "number", default: 4.8 },
+        depth: { type: "number", default: 4.2 }
+      },
+      init: function () {
+        const w = this.data.width, d = this.data.depth;
+        this.el.innerHTML = `
+          <a-box position="0 0 ${-d/2}" width="${w}" height="0.025" depth="0.06" color="#F4CB3A"></a-box>
+          <a-box position="0 0 ${d/2}" width="${w}" height="0.025" depth="0.06" color="#F4CB3A"></a-box>
+          <a-box position="${-w/2} 0 0" width="0.06" height="0.025" depth="${d}" color="#F4CB3A"></a-box>
+          <a-box position="${w/2} 0 0" width="0.06" height="0.025" depth="${d}" color="#F4CB3A"></a-box>
+        `;
+      }
+    });
+
+    AFRAME.registerComponent("tower-light", {
+      init: function () {
+        this.el.innerHTML = `
+          <a-cylinder position="0 0.10 0" radius="0.055" height="0.20" color="#40484D"></a-cylinder>
+          <a-cylinder position="0 0.24 0" radius="0.060" height="0.10" material="color:#42CE58; emissive:#176625; emissiveIntensity:0.7"></a-cylinder>
+          <a-cylinder position="0 0.35 0" radius="0.060" height="0.10" color="#F5C542"></a-cylinder>
+          <a-cylinder position="0 0.46 0" radius="0.060" height="0.10" color="#E34A42"></a-cylinder>
+        `;
+      }
+    });
+
+    AFRAME.registerComponent("lowpoly-robot", {
+      schema: {
+        color: { type: "color", default: "#2D83D4" },
+        jointColor: { type: "color", default: "#263B49" },
+        scale: { type: "number", default: 1 },
+        tool: { type: "string", default: "gripper" },
+        duration: { type: "number", default: 3200 },
+        yaw: { type: "number", default: 25 },
+        shoulder: { type: "number", default: 30 },
+        elbow: { type: "number", default: 40 },
+        wrist: { type: "number", default: 25 }
+      },
+      init: function () {
+        const d = this.data, s = d.scale;
+        const baseRadius = 0.28*s, baseHeight = 0.34*s;
+        const upperLength = 0.72*s, foreLength = 0.62*s;
+        const armRadius = 0.085*s, jointRadius = 0.14*s;
+        let toolHTML = "";
+
+        if (d.tool === "suction") {
+          toolHTML = `
+            <a-cylinder position="0 ${0.14*s} 0" radius="${0.07*s}" height="${0.20*s}" color="#303A40"></a-cylinder>
+            <a-cylinder position="0 ${0.27*s} 0" radius="${0.11*s}" height="${0.05*s}" color="#20272C"></a-cylinder>`;
+        } else if (d.tool === "lens") {
+          toolHTML = `
+            <a-box position="${-0.07*s} ${0.15*s} 0" width="${0.045*s}" height="${0.28*s}" depth="${0.07*s}" color="#303A40"></a-box>
+            <a-box position="${0.07*s} ${0.15*s} 0" width="${0.045*s}" height="${0.28*s}" depth="${0.07*s}" color="#303A40"></a-box>
+            <a-cylinder position="0 ${0.30*s} 0" radius="${0.055*s}" height="${0.07*s}" color="#11181D"></a-cylinder>`;
+        } else if (d.tool === "fastener") {
+          toolHTML = `
+            <a-cylinder position="0 ${0.20*s} 0" radius="${0.055*s}" height="${0.35*s}" color="#303A40"></a-cylinder>
+            <a-cylinder position="0 ${0.40*s} 0" radius="${0.025*s}" height="${0.10*s}" color="#CBD3D7"></a-cylinder>`;
+        } else if (d.tool === "connector") {
+          toolHTML = `
+            <a-box position="0 ${0.16*s} 0" width="${0.18*s}" height="${0.26*s}" depth="${0.14*s}" color="#303A40"></a-box>
+            <a-box position="0 ${0.34*s} 0" width="${0.11*s}" height="${0.12*s}" depth="${0.09*s}" color="#20DCEB"></a-box>`;
+        } else {
+          toolHTML = `
+            <a-box position="${-0.075*s} ${0.17*s} 0" width="${0.045*s}" height="${0.30*s}" depth="${0.07*s}" color="#303A40"></a-box>
+            <a-box position="${0.075*s} ${0.17*s} 0" width="${0.045*s}" height="${0.30*s}" depth="${0.07*s}" color="#303A40"></a-box>`;
+        }
+
+        this.el.innerHTML = `
+          <a-cylinder position="0 ${baseHeight/2} 0" radius="${baseRadius}" height="${baseHeight}" color="${d.color}"></a-cylinder>
+          <a-entity position="0 ${baseHeight} 0"
+            animation__base="property:rotation; from:0 ${-d.yaw} 0; to:0 ${d.yaw} 0; dur:${d.duration}; dir:alternate; loop:true; easing:easeInOutSine">
+            <a-sphere radius="${jointRadius}" color="${d.jointColor}"></a-sphere>
+            <a-entity animation__shoulder="property:rotation; from:0 0 ${-d.shoulder/2}; to:0 0 ${d.shoulder}; dur:${d.duration*0.88}; dir:alternate; loop:true; easing:easeInOutSine">
+              <a-cylinder position="0 ${upperLength/2} 0" radius="${armRadius}" height="${upperLength}" color="${d.color}"></a-cylinder>
+              <a-entity position="0 ${upperLength} 0"
+                animation__elbow="property:rotation; from:0 0 ${d.elbow/4}; to:0 0 ${d.elbow}; dur:${d.duration*0.72}; delay:250; dir:alternate; loop:true; easing:easeInOutSine">
+                <a-sphere radius="${jointRadius*0.9}" color="${d.jointColor}"></a-sphere>
+                <a-cylinder position="0 ${foreLength/2} 0" radius="${armRadius*0.88}" height="${foreLength}" color="${d.color}"></a-cylinder>
+                <a-entity position="0 ${foreLength} 0"
+                  animation__wrist="property:rotation; from:0 0 ${-d.wrist}; to:0 0 ${d.wrist}; dur:${d.duration*0.55}; dir:alternate; loop:true; easing:easeInOutSine">
+                  <a-sphere radius="${jointRadius*0.7}" color="${d.jointColor}"></a-sphere>
+                  ${toolHTML}
+                </a-entity>
+              </a-entity>
+            </a-entity>
+          </a-entity>`;
+      }
+    });
+
+    AFRAME.registerComponent("carrier-loop", {
+      schema: {
+        startX: { type: "number", default: -0.7 },
+        endX: { type: "number", default: 0.7 },
+        period: { type: "number", default: 6500 },
+        phase: { type: "number", default: 0 }
+      },
+      tick: function (time) {
+        const d = this.data;
+        const progress = ((time / d.period) + d.phase) % 1;
+        this.el.object3D.position.x = d.startX + (d.endX - d.startX) * progress;
+      }
+    });
+
+    AFRAME.registerComponent("conveyor-section", {
+      schema: {
+        length: { type: "number", default: 2.0 },
+        product: { type: "string", default: "pcb" },
+        speed: { type: "number", default: 6500 }
+      },
+      init: function () {
+        const d = this.data;
+        const start = -d.length/2 + 0.22;
+        const end = d.length/2 - 0.22;
+
+        const productHTML = (type) => {
+          if (type === "pcb") {
+            return `
+              <a-box position="0 0.095 0" width="0.24" height="0.035" depth="0.30" color="#2D9B57"></a-box>
+              <a-box position="-0.055 0.125 0" width="0.055" height="0.025" depth="0.08" color="#27323A"></a-box>
+              <a-box position="0.055 0.125 0.04" width="0.05" height="0.025" depth="0.06" color="#D4B33B"></a-box>`;
+          }
+          if (type === "sensor") {
+            return `
+              <a-box position="0 0.095 0" width="0.24" height="0.035" depth="0.30" color="#2D9B57"></a-box>
+              <a-box position="0 0.135 0" width="0.10" height="0.045" depth="0.10" color="#252B30"></a-box>`;
+          }
+          if (type === "lens") {
+            return `
+              <a-box position="0 0.095 0" width="0.24" height="0.035" depth="0.30" color="#3C8F69"></a-box>
+              <a-cylinder position="0 0.155 0" radius="0.070" height="0.090" color="#252B30"></a-cylinder>
+              <a-cylinder position="0 0.205 0" radius="0.045" height="0.035" color="#5293BC"></a-cylinder>`;
+          }
+          if (type === "housing") {
+            return `
+              <a-box position="0 0.13 0" width="0.24" height="0.16" depth="0.25" color="#E4E7E8"></a-box>
+              <a-cylinder position="0 0.13 0.14" rotation="90 0 0" radius="0.07" height="0.07" color="#25313A"></a-cylinder>`;
+          }
+          return `
+            <a-box position="0 0.13 0" width="0.24" height="0.16" depth="0.25" color="#E5E8E9"></a-box>
+            <a-cylinder position="0 0.13 0.15" rotation="90 0 0" radius="0.075" height="0.08" color="#26333D"></a-cylinder>
+            <a-cylinder position="0 0.13 0.20" rotation="90 0 0" radius="0.045" height="0.035" color="#3783B3"></a-cylinder>`;
+        };
+
+        const carrier = (phase) => `
+          <a-entity position="0 0.88 0" carrier-loop="startX:${start}; endX:${end}; period:${d.speed}; phase:${phase}">
+            <a-box width="0.32" height="0.07" depth="0.52" color="#485158"></a-box>
+            ${productHTML(d.product)}
+          </a-entity>`;
+
+        this.el.innerHTML = `
+          <a-box position="0 0.72 0" width="${d.length}" height="0.10" depth="0.80" color="#30373B"></a-box>
+          <a-box position="0 0.93 -0.44" width="${d.length}" height="0.08" depth="0.055" color="#B7C1C6"></a-box>
+          <a-box position="0 0.93 0.44" width="${d.length}" height="0.08" depth="0.055" color="#B7C1C6"></a-box>
+
+          <a-box position="-0.25 0.35 -0.34" width="0.07" height="0.70" depth="0.07" color="#707A80"></a-box>
+          <a-box position="-0.25 0.35 0.34" width="0.07" height="0.70" depth="0.07" color="#707A80"></a-box>
+          <a-box position="0.25 0.35 -0.34" width="0.07" height="0.70" depth="0.07" color="#707A80"></a-box>
+          <a-box position="0.25 0.35 0.34" width="0.07" height="0.70" depth="0.07" color="#707A80"></a-box>
+
+          ${carrier(0)}
+          ${carrier(0.3333)}
+          ${carrier(0.6666)}
+        `;
+      }
+    });
+
+    AFRAME.registerComponent("flow-arrow", {
+      init: function () {
+        this.el.innerHTML = `
+          <a-box width="0.62" height="0.025" depth="0.10" color="#20DCEB"></a-box>
+          <a-box position="0.34 0 0.12" width="0.32" height="0.025" depth="0.09" rotation="0 45 0" color="#20DCEB"></a-box>
+          <a-box position="0.34 0 -0.12" width="0.32" height="0.025" depth="0.09" rotation="0 -45 0" color="#20DCEB"></a-box>`;
+      }
+    });
+
+    AFRAME.registerComponent("machine-info", {
+      schema: {
+        title: { type: "string" },
+        description: { type: "string" },
+        color: { type: "color", default: "#2484C6" }
+      },
+      init: function () {
+        const d = this.data;
+        this.el.addEventListener("click", function () {
+          const panel = document.querySelector("#infoPanel");
+          const title = document.querySelector("#infoTitle");
+          const description = document.querySelector("#infoDescription");
+          const bar = document.querySelector("#infoHeader");
+
+          panel.setAttribute("visible", true);
+          title.setAttribute("value", d.title);
+          description.setAttribute("value", d.description);
+          bar.setAttribute("color", d.color);
+        });
+      }
+    });
+  </script>
+</head>
+
+<body style="margin:0; overflow:hidden; background:#000;">
+<a-scene
+  renderer="antialias:true; colorManagement:true; physicallyCorrectLights:false; precision:mediump; sortObjects:true"
+  background="color:#AAB7C1"
+  vr-mode-ui="enabled:true"
+  xr-mode-ui="enabled:true">
+
+  <!-- FACTORY ENVIRONMENT -->
+  <a-entity light="type:ambient; intensity:0.8; color:#DCE7EE"></a-entity>
+  <a-entity position="-5 8 5" rotation="-55 -30 0" light="type:directional; intensity:0.65; color:#FFFFFF"></a-entity>
+
+  <a-box position="0 -0.05 0" width="36" height="0.10" depth="14" color="#6F7479"></a-box>
+  <a-entity factory-grid="width:36; depth:14; step:1"></a-entity>
+
+  <a-box position="0 3 -6.9" width="36" height="6" depth="0.20" color="#536777"></a-box>
+  <a-box position="-17.9 3 0" width="0.20" height="6" depth="14" color="#4A5E6D"></a-box>
+  <a-box position="17.9 3 0" width="0.20" height="6" depth="14" color="#4A5E6D"></a-box>
+
+  <!-- CEILING LIGHTS -->
+  <a-entity position="0 5.5 -1.8">
+    <a-box position="-15 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="-11.7 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="-8.4 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="-5.1 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="-1.8 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="1.8 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="5.1 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="8.4 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="11.7 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+    <a-box position="15 0 0" width="2.4" height="0.07" depth="0.45" material="color:#F1F8FA; emissive:#D9ECF3; emissiveIntensity:0.7"></a-box>
+  </a-entity>
+
+  <!-- WALKING PATH -->
+  <a-box position="0 0.02 5" width="34" height="0.03" depth="1.8" color="#3E8158"></a-box>
+  <a-box position="0 0.045 4.1" width="34" height="0.025" depth="0.08" color="#F2D34F"></a-box>
+  <a-box position="0 0.045 5.9" width="34" height="0.025" depth="0.08" color="#F2D34F"></a-box>
+  <a-text value="PEDESTRIAN WALKING PATH" position="0 0.065 5" rotation="-90 0 0" align="center" width="7" color="#FFFFFF"></a-text>
+
+  <!-- SAFETY ZONES -->
+  <a-entity position="-12.5 0.025 0" safety-zone="width:4.8; depth:4.2"></a-entity>
+  <a-entity position="-7.5 0.025 0" safety-zone="width:5.4; depth:4.5"></a-entity>
+  <a-entity position="-2.5 0.025 0" safety-zone="width:4.8; depth:4.2"></a-entity>
+  <a-entity position="2.5 0.025 0" safety-zone="width:4.8; depth:4.2"></a-entity>
+  <a-entity position="7.5 0.025 0" safety-zone="width:4.8; depth:4.2"></a-entity>
+  <a-entity position="12.5 0.025 0" safety-zone="width:4.8; depth:4.2"></a-entity>
+
+  <!-- PRODUCTION FLOW ARROWS -->
+  <a-entity position="-10 0.055 2.65" flow-arrow></a-entity>
+  <a-entity position="-5 0.055 2.65" flow-arrow></a-entity>
+  <a-entity position="0 0.055 2.65" flow-arrow></a-entity>
+  <a-entity position="5 0.055 2.65" flow-arrow></a-entity>
+  <a-entity position="10 0.055 2.65" flow-arrow></a-entity>
+
+  <!-- M01 PCB INSPECTION -->
+  <a-entity id="M01" position="-12.5 0 0">
+    <a-box position="0 0.22 0" width="3.8" height="0.44" depth="3.0" color="#DDE5EA"></a-box>
+    <a-box position="-1.75 1.45 -1.35" width="0.18" height="2.35" depth="0.18" color="#EDF3F5"></a-box>
+    <a-box position="1.75 1.45 -1.35" width="0.18" height="2.35" depth="0.18" color="#EDF3F5"></a-box>
+    <a-box position="-1.75 1.45 1.35" width="0.18" height="2.35" depth="0.18" color="#EDF3F5"></a-box>
+    <a-box position="1.75 1.45 1.35" width="0.18" height="2.35" depth="0.18" color="#EDF3F5"></a-box>
+    <a-box position="0 2.58 0" width="3.7" height="0.20" depth="2.9" color="#EDF3F5"></a-box>
+    <a-box position="-1.58 1.5 1.43" width="0.17" height="2.0" depth="0.08" color="#2778C8"></a-box>
+    <a-box position="1.58 1.5 1.43" width="0.17" height="2.0" depth="0.08" color="#2778C8"></a-box>
+
+    <a-box position="-1.05 0.70 -0.65" width="0.75" height="0.12" depth="0.70" color="#626E75"></a-box>
+    <a-box position="-1.05 0.79 -0.65" width="0.48" height="0.035" depth="0.38" color="#2F9957"></a-box>
+    <a-box position="-1.05 0.84 -0.65" width="0.45" height="0.035" depth="0.36" color="#37895A"></a-box>
+
+    <a-box position="0.35 0.70 -0.70" width="0.95" height="0.16" depth="0.80" color="#98A8B1"></a-box>
+    <a-box position="0.35 0.82 -0.70" width="0.58" height="0.04" depth="0.44" color="#2F9957"></a-box>
+
+    <a-box position="0.35 2.15 -0.70" width="0.45" height="0.18" depth="0.45" color="#34434D"></a-box>
+    <a-cylinder position="0.35 1.96 -0.70" radius="0.095" height="0.20" color="#202D35"></a-cylinder>
+    <a-cylinder position="0.35 1.83 -0.70" radius="0.055" height="0.06" color="#3D9DD0"></a-cylinder>
+
+    <a-entity position="-0.65 0.48 0.55"
+      lowpoly-robot="color:#2D83D4; jointColor:#244154; scale:0.82; tool:suction; duration:3300; yaw:28; shoulder:32; elbow:42; wrist:20"></a-entity>
+
+    <a-box position="1.38 1.00 1.15" width="0.45" height="1.25" depth="0.42" color="#D9E1E5"></a-box>
+    <a-box position="1.38 1.27 1.37" width="0.30" height="0.27" depth="0.035" material="color:#2E88C7; emissive:#123B55; emissiveIntensity:0.5"></a-box>
+    <a-entity position="1.60 2.65 1.20" tower-light></a-entity>
+
+    <a-box position="0 3.00 0" width="3.1" height="0.48" depth="0.08" color="#235D94"></a-box>
+    <a-text value="M01 - PCB INSPECTION" position="0 3.00 0.05" align="center" width="4" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.35 0" width="4.0" height="2.7" depth="3.2"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M01 - PCB Loading and Electronic Inspection; description:Loads circuit boards, moves them to the inspection platform, checks electronic components, and transfers approved PCBs to the next stage.; color:#2778C8"></a-box>
+  </a-entity>
+
+  <!-- C12 -->
+  <a-entity id="C12" position="-10 0 0" conveyor-section="length:2.0; product:pcb; speed:6200"></a-entity>
+
+  <!-- M02 SENSOR ASSEMBLY -->
+  <a-entity id="M02" position="-7.5 0 0">
+    <a-box position="0 0.22 0" width="4.4" height="0.44" depth="3.4" color="#B96712"></a-box>
+    <a-box position="-2.05 1.60 -1.55" width="0.20" height="2.55" depth="0.20" color="#EB8515"></a-box>
+    <a-box position="2.05 1.60 -1.55" width="0.20" height="2.55" depth="0.20" color="#EB8515"></a-box>
+    <a-box position="-2.05 1.60 1.55" width="0.20" height="2.55" depth="0.20" color="#EB8515"></a-box>
+    <a-box position="2.05 1.60 1.55" width="0.20" height="2.55" depth="0.20" color="#EB8515"></a-box>
+    <a-box position="0 2.78 -1.55" width="4.25" height="0.20" depth="0.20" color="#EB8515"></a-box>
+    <a-box position="0 2.78 1.55" width="4.25" height="0.20" depth="0.20" color="#EB8515"></a-box>
+
+    <a-box position="0 1.55 1.58" width="3.8" height="2.1" depth="0.035" material="color:#B9DDE5; transparent:true; opacity:0.18; side:double"></a-box>
+    <a-box position="-2.08 1.55 0" width="0.035" height="2.1" depth="2.6" material="color:#B9DDE5; transparent:true; opacity:0.16; side:double"></a-box>
+
+    <a-box position="0.55 0.68 -0.70" width="1.15" height="0.18" depth="0.90" color="#89979E"></a-box>
+    <a-box position="0.55 0.82 -0.70" width="0.65" height="0.05" depth="0.48" color="#318D57"></a-box>
+    <a-box position="0.55 0.88 -0.70" width="0.14" height="0.05" depth="0.14" color="#242D33"></a-box>
+
+    <a-box position="-1.30 0.72 -0.75" width="0.65" height="0.30" depth="0.85" color="#5A656B"></a-box>
+    <a-box position="-1.30 0.90 -0.75" width="0.48" height="0.06" depth="0.65" color="#353D42"></a-box>
+
+    <a-entity position="-0.65 0.48 0.65"
+      lowpoly-robot="color:#F18B18; jointColor:#93470B; scale:1.08; tool:suction; duration:3900; yaw:35; shoulder:38; elbow:55; wrist:24"></a-entity>
+
+    <a-box position="1.72 1.10 1.30" width="0.55" height="1.65" depth="0.46" color="#D9E1E4"></a-box>
+    <a-box position="1.72 1.46 1.54" width="0.37" height="0.32" depth="0.035" material="color:#297DAF; emissive:#12405A; emissiveIntensity:0.5"></a-box>
+    <a-entity position="1.85 2.80 1.30" tower-light></a-entity>
+
+    <a-box position="0 3.15 0" width="3.3" height="0.48" depth="0.08" color="#C5640A"></a-box>
+    <a-text value="M02 - SENSOR ASSEMBLY" position="0 3.15 0.05" align="center" width="4.2" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.55 0" width="4.6" height="3.1" depth="3.6"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M02 - Image Sensor and Mainboard Assembly; description:The orange robot picks an image sensor, aligns it above the CCTV mainboard, and places the component into the assembly fixture.; color:#EB8515"></a-box>
+  </a-entity>
+
+  <!-- C23 -->
+  <a-entity id="C23" position="-5 0 0" conveyor-section="length:2.0; product:sensor; speed:6400"></a-entity>
+
+  <!-- M03 LENS ALIGNMENT -->
+  <a-entity id="M03" position="-2.5 0 0">
+    <a-box position="0 0.22 0" width="3.8" height="0.44" depth="3.0" color="#DCE4E8"></a-box>
+    <a-box position="-1.75 1.50 -1.35" width="0.18" height="2.40" depth="0.18" color="#E9F0F3"></a-box>
+    <a-box position="1.75 1.50 -1.35" width="0.18" height="2.40" depth="0.18" color="#E9F0F3"></a-box>
+    <a-box position="-1.75 1.50 1.35" width="0.18" height="2.40" depth="0.18" color="#3B79B7"></a-box>
+    <a-box position="1.75 1.50 1.35" width="0.18" height="2.40" depth="0.18" color="#3B79B7"></a-box>
+    <a-box position="0 2.62 0" width="3.7" height="0.20" depth="2.9" color="#E9F0F3"></a-box>
+
+    <a-cylinder position="-1.10 0.78 -0.72" radius="0.30" height="0.95" color="#55788F"></a-cylinder>
+    <a-cylinder position="-1.10 1.16 -0.72" radius="0.36" height="0.08" color="#263640"></a-cylinder>
+    <a-cylinder position="-1.10 1.37 -0.72" radius="0.30" height="0.07" color="#263640"></a-cylinder>
+    <a-cylinder position="-1.10 1.57 -0.72" radius="0.25" height="0.07" color="#263640"></a-cylinder>
+
+    <a-box position="0.35 0.70 -0.72" width="1.05" height="0.18" depth="0.85" color="#8B9CA5"></a-box>
+    <a-cylinder position="0.35 0.85 -0.72" radius="0.27" height="0.08" color="#33434D"></a-cylinder>
+    <a-cylinder position="0.35 0.95 -0.72" radius="0.14" height="0.16" color="#242B30"></a-cylinder>
+    <a-cylinder position="0.35 1.05 -0.72" radius="0.085" height="0.05" color="#4E9AC5"></a-cylinder>
+
+    <a-box position="1.10 1.25 -0.72" width="0.25" height="0.70" depth="0.30" color="#DCE5E9"></a-box>
+    <a-cylinder position="0.94 1.34 -0.72" rotation="0 0 90" radius="0.08" height="0.22" color="#293842"></a-cylinder>
+
+    <a-entity position="-0.35 0.47 0.62"
+      lowpoly-robot="color:#76A4CF; jointColor:#344B5B; scale:0.82; tool:lens; duration:3500; yaw:26; shoulder:26; elbow:38; wrist:20"></a-entity>
+
+    <a-box position="1.40 1.03 1.15" width="0.45" height="1.25" depth="0.40" color="#E0E6E9"></a-box>
+    <a-box position="1.40 1.30 1.36" width="0.30" height="0.27" depth="0.03" material="color:#3189BF; emissive:#123C57; emissiveIntensity:0.5"></a-box>
+    <a-entity position="1.55 2.68 1.18" tower-light></a-entity>
+
+    <a-box position="0 3.02 0" width="3.2" height="0.48" depth="0.08" color="#2E679E"></a-box>
+    <a-text value="M03 - LENS ALIGNMENT" position="0 3.02 0.05" align="center" width="4" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.40 0" width="4.0" height="2.8" depth="3.2"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M03 - Lens Module Installation and Alignment; description:A precision robot installs the lens module above the image sensor and rotates the wrist to simulate optical focusing and alignment.; color:#3B79B7"></a-box>
+  </a-entity>
+
+  <!-- C34 -->
+  <a-entity id="C34" position="0 0 0" conveyor-section="length:2.0; product:lens; speed:6600"></a-entity>
+
+  <!-- M04 HOUSING ASSEMBLY -->
+  <a-entity id="M04" position="2.5 0 0">
+    <a-box position="0 0.22 0" width="3.8" height="0.44" depth="3.0" color="#717B81"></a-box>
+    <a-box position="-1.75 1.50 -1.35" width="0.18" height="2.40" depth="0.18" color="#E5B829"></a-box>
+    <a-box position="1.75 1.50 -1.35" width="0.18" height="2.40" depth="0.18" color="#E5B829"></a-box>
+    <a-box position="-1.75 1.50 1.35" width="0.18" height="2.40" depth="0.18" color="#E5B829"></a-box>
+    <a-box position="1.75 1.50 1.35" width="0.18" height="2.40" depth="0.18" color="#E5B829"></a-box>
+    <a-box position="0 2.62 0" width="3.7" height="0.20" depth="2.9" color="#E5B829"></a-box>
+
+    <a-box position="0.35 0.70 -0.72" width="1.15" height="0.18" depth="0.90" color="#A4AFB4"></a-box>
+    <a-box position="0.05 0.86 -0.72" width="0.40" height="0.28" depth="0.38" color="#E5E7E8"></a-box>
+    <a-cylinder position="0.05 0.86 -0.48" rotation="90 0 0" radius="0.12" height="0.10" color="#2B353C"></a-cylinder>
+    <a-box position="0.65 0.86 -0.72" width="0.40" height="0.28" depth="0.38" color="#CFD4D7"></a-box>
+
+    <a-box position="-1.10 0.72 -0.70" width="0.55" height="0.18" depth="0.75" color="#626D72"></a-box>
+    <a-cylinder position="-1.22 0.87 -0.82" radius="0.035" height="0.12" color="#CBD2D6"></a-cylinder>
+    <a-cylinder position="-1.02 0.87 -0.82" radius="0.035" height="0.12" color="#CBD2D6"></a-cylinder>
+    <a-cylinder position="-1.22 0.87 -0.58" radius="0.035" height="0.12" color="#CBD2D6"></a-cylinder>
+    <a-cylinder position="-1.02 0.87 -0.58" radius="0.035" height="0.12" color="#CBD2D6"></a-cylinder>
+
+    <a-entity position="-0.48 0.48 0.62"
+      lowpoly-robot="color:#E7B426; jointColor:#5A4C22; scale:0.92; tool:fastener; duration:4000; yaw:30; shoulder:34; elbow:48; wrist:24"></a-entity>
+
+    <a-box position="1.42 1.03 1.15" width="0.46" height="1.25" depth="0.40" color="#DEE3E5"></a-box>
+    <a-box position="1.42 1.30 1.36" width="0.30" height="0.27" depth="0.03" material="color:#3985B4; emissive:#143C55; emissiveIntensity:0.5"></a-box>
+    <a-entity position="1.58 2.68 1.17" tower-light></a-entity>
+
+    <a-box position="0 3.02 0" width="3.4" height="0.48" depth="0.08" color="#A98114"></a-box>
+    <a-text value="M04 - HOUSING ASSEMBLY" position="0 3.02 0.05" align="center" width="4.2" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.40 0" width="4.0" height="2.8" depth="3.2"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M04 - Camera Housing and Mechanical Assembly; description:The robot places the PCB and lens assembly into the camera housing and moves between fastening points to simulate mechanical assembly.; color:#D4AA20"></a-box>
+  </a-entity>
+
+  <!-- C45 -->
+  <a-entity id="C45" position="5 0 0" conveyor-section="length:2.0; product:housing; speed:6800"></a-entity>
+
+  <!-- M05 FIRMWARE / NETWORK TEST -->
+  <a-entity id="M05" position="7.5 0 0">
+    <a-box position="0 0.25 -1.35" width="3.8" height="0.50" depth="0.30" color="#343D45"></a-box>
+    <a-box position="-1.75 1.50 -1.25" width="0.28" height="2.40" depth="0.35" color="#343D45"></a-box>
+    <a-box position="1.75 1.50 -1.25" width="0.28" height="2.40" depth="0.35" color="#343D45"></a-box>
+    <a-box position="0 2.65 0" width="3.8" height="0.25" depth="3.0" color="#343D45"></a-box>
+
+    <a-box position="-1.60 1.45 1.38" width="0.09" height="2.10" depth="0.09" color="#20DCEB"></a-box>
+    <a-box position="1.60 1.45 1.38" width="0.09" height="2.10" depth="0.09" color="#20DCEB"></a-box>
+
+    <a-box position="0.45 0.72 -0.70" width="1.10" height="0.22" depth="0.90" color="#737F85"></a-box>
+    <a-box position="0.40 0.92 -0.70" width="0.42" height="0.28" depth="0.38" color="#E4E7E8"></a-box>
+    <a-cylinder position="0.40 0.92 -0.45" rotation="90 0 0" radius="0.13" height="0.12" color="#28343B"></a-cylinder>
+    <a-box position="0.95 1.02 -0.70" width="0.22" height="0.30" depth="0.24" color="#20DCEB"></a-box>
+
+    <a-entity position="-0.62 0.48 0.62"
+      lowpoly-robot="color:#A7B4BC; jointColor:#35464F; scale:0.82; tool:connector; duration:4200; yaw:28; shoulder:28; elbow:42; wrist:20"></a-entity>
+
+    <a-box position="1.32 1.30 1.15" width="0.68" height="1.90" depth="0.48" color="#293239"></a-box>
+    <a-box position="1.32 1.65 1.40" width="0.47" height="0.52" depth="0.035" material="color:#0F879B; emissive:#065763; emissiveIntensity:0.8"></a-box>
+    <a-box position="1.32 1.72 1.43" width="0.30" height="0.025" depth="0.012" rotation="0 0 10" color="#74F4C4"></a-box>
+    <a-box position="1.32 1.63 1.43" width="0.30" height="0.025" depth="0.012" rotation="0 0 -8" color="#74F4C4"></a-box>
+
+    <a-entity position="1.55 2.72 1.17" tower-light></a-entity>
+
+    <a-box position="0 3.08 0" width="3.55" height="0.48" depth="0.08" color="#27333B"></a-box>
+    <a-text value="M05 - FIRMWARE / NETWORK TEST" position="0 3.08 0.05" align="center" width="4.3" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.45 0" width="4.0" height="2.9" depth="3.2"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M05 - Firmware Network and Configuration Test; description:A compact robot loads the assembled camera into a test fixture while a connector simulates firmware loading, network communication, and configuration testing.; color:#20BFD1"></a-box>
+  </a-entity>
+
+  <!-- C56 -->
+  <a-entity id="C56" position="10 0 0" conveyor-section="length:2.0; product:camera; speed:7000"></a-entity>
+
+  <!-- M06 IMAGE QUALITY / FINAL TEST -->
+  <a-entity id="M06" position="12.5 0 0">
+    <a-box position="0 0.25 -1.40" width="3.8" height="0.50" depth="0.25" color="#183E67"></a-box>
+    <a-box position="-1.78 1.50 0" width="0.25" height="2.50" depth="3.15" color="#183E67"></a-box>
+    <a-box position="1.78 1.50 0" width="0.25" height="2.50" depth="3.15" color="#183E67"></a-box>
+    <a-box position="0 2.74 0" width="3.8" height="0.25" depth="3.15" color="#20588D"></a-box>
+
+    <a-box position="0.25 0.72 -0.65" width="1.20" height="0.20" depth="0.95" color="#7C8C95"></a-box>
+    <a-cylinder position="0.25 0.88 -0.65" radius="0.38" height="0.18" color="#334D5D"
+      animation="property:rotation; from:0 -25 0; to:0 25 0; dur:3500; dir:alternate; loop:true; easing:easeInOutSine"></a-cylinder>
+
+    <a-box position="0.25 1.07 -0.65" width="0.42" height="0.28" depth="0.40" color="#E5E8EA"></a-box>
+    <a-cylinder position="0.25 1.07 -0.38" rotation="90 0 0" radius="0.13" height="0.12" color="#29373F"></a-cylinder>
+    <a-cylinder position="0.25 1.07 -0.31" rotation="90 0 0" radius="0.075" height="0.05" color="#3989B6"></a-cylinder>
+
+    <a-box position="1.15 1.55 -1.25" width="0.90" height="0.90" depth="0.07" color="#E7E7E7"></a-box>
+    <a-box position="0.92 1.78 -1.20" width="0.20" height="0.20" depth="0.025" color="#202020"></a-box>
+    <a-box position="1.35 1.78 -1.20" width="0.20" height="0.20" depth="0.025" color="#202020"></a-box>
+    <a-box position="1.14 1.55 -1.20" width="0.20" height="0.20" depth="0.025" color="#202020"></a-box>
+    <a-box position="0.92 1.32 -1.20" width="0.20" height="0.20" depth="0.025" color="#202020"></a-box>
+    <a-box position="1.35 1.32 -1.20" width="0.20" height="0.20" depth="0.025" color="#202020"></a-box>
+
+    <a-entity position="-0.68 0.48 0.62"
+      lowpoly-robot="color:#AABBC7; jointColor:#344C5E; scale:0.83; tool:gripper; duration:4300; yaw:26; shoulder:28; elbow:44; wrist:24"></a-entity>
+
+    <a-box position="1.42 1.28 1.15" width="0.64" height="1.75" depth="0.45" color="#14324E"></a-box>
+    <a-box position="1.42 1.60 1.39" width="0.43" height="0.48" depth="0.035" material="color:#1676A6; emissive:#0A4766; emissiveIntensity:0.75"></a-box>
+    <a-box position="1.42 1.60 1.43" width="0.20" height="0.12" depth="0.015" color="#8BE6FF"></a-box>
+    <a-cylinder position="1.42 1.60 1.46" rotation="90 0 0" radius="0.045" height="0.02" color="#174D6A"></a-cylinder>
+
+    <a-entity position="1.56 2.82 1.16" tower-light></a-entity>
+
+    <a-box position="0 3.20 0" width="3.50" height="0.48" depth="0.08" color="#173D66"></a-box>
+    <a-text value="M06 - IMAGE QUALITY TEST" position="0 3.20 0.05" align="center" width="4.2" color="#FFFFFF"></a-text>
+
+    <a-box class="clickable" position="0 1.50 0" width="4.0" height="3.0" depth="3.4"
+      material="color:#FFFFFF; transparent:true; opacity:0.001"
+      machine-info="title:M06 - Image Quality and Final Functional Test; description:The robot loads the completed CCTV camera into a rotating optical test fixture for image-quality inspection, final functionality checks, and output approval.; color:#20588D"></a-box>
+  </a-entity>
+
+  <a-text value="PRODUCTION FLOW  +X" position="14.7 3.8 -5.75" align="center" width="4" color="#20DCEB"></a-text>
+
+  <!-- CAMERA RIG: WASD + mouse look -->
+  <a-entity id="cameraRig" position="0 1.65 5.0">
+    <a-camera
+      id="mainCamera"
+      position="0 0 0"
+      look-controls="enabled:true; pointerLockEnabled:true; touchEnabled:true"
+      wasd-controls="enabled:true; acceleration:28; fly:false">
+
+      <a-cursor
+        id="cursor"
+        fuse="false"
+        raycaster="objects:.clickable; far:35"
+        material="color:#20DCEB; shader:flat; opacity:0.85"
+        geometry="primitive:ring; radiusInner:0.008; radiusOuter:0.013">
+      </a-cursor>
+
+      <a-entity position="0 0.76 -1.5">
+        <a-plane width="1.20" height="0.18" material="color:#182833; transparent:true; opacity:0.82"></a-plane>
+        <a-text value="WASD: MOVE   |   MOUSE: LOOK   |   AIM + CLICK: MACHINE INFO"
+          position="0 0 0.01" align="center" width="1.08" color="#FFFFFF"></a-text>
+      </a-entity>
+
+      <a-entity id="infoPanel" position="0 -0.58 -1.55" visible="false">
+        <a-plane width="1.25" height="0.45" material="color:#172832; transparent:true; opacity:0.92"></a-plane>
+        <a-box id="infoHeader" position="0 0.15 0.012" width="1.18" height="0.10" depth="0.012" color="#2778C8"></a-box>
+        <a-text id="infoTitle" value="STATION" position="0 0.15 0.025" align="center" width="1.08" color="#FFFFFF"></a-text>
+        <a-text id="infoDescription" value="Station description." position="0 -0.055 0.025" align="center" width="1.05" wrap-count="55" color="#E6EFF2"></a-text>
+      </a-entity>
+    </a-camera>
+
+    <a-entity laser-controls="hand:left" raycaster="objects:.clickable; far:35"></a-entity>
+    <a-entity laser-controls="hand:right" raycaster="objects:.clickable; far:35"></a-entity>
+  </a-entity>
+
+</a-scene>
+</body>
+</html>
