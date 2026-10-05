@@ -1,118 +1,229 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AR Hiro - หน้าผอม / หน้าอ้วน</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AR Hiro - 3D Hippo</title>
 
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-
-    #status {
-      position: fixed;
-      z-index: 20;
-      top: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      background: rgba(0,0,0,.60);
-      padding: 9px 15px;
-      border-radius: 14px;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    #buttons {
-      position: fixed;
-      z-index: 20;
-      left: 0;
-      right: 0;
-      bottom: 22px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 999px;
-      padding: 13px 24px;
-      color: white;
-      background: rgba(20,20,20,.82);
-      font-size: 17px;
-      font-weight: bold;
-      box-shadow: 0 5px 18px rgba(0,0,0,.3);
-    }
-
-    button:active { transform: scale(.96); }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;font-family:Arial,sans-serif}
+#status{
+  position:fixed;z-index:20;top:14px;left:50%;transform:translateX(-50%);
+  color:#fff;background:rgba(0,0,0,.62);padding:9px 15px;border-radius:14px;
+  font-size:14px;white-space:nowrap
+}
+#buttons{
+  position:fixed;z-index:20;left:0;right:0;bottom:20px;
+  display:flex;justify-content:center;gap:10px
+}
+button{
+  border:0;border-radius:999px;padding:13px 18px;color:#fff;
+  background:rgba(25,25,25,.85);font-size:16px;font-weight:bold;
+  box-shadow:0 5px 18px rgba(0,0,0,.3)
+}
+button:active{transform:scale(.95)}
+</style>
 </head>
 
 <body>
-  <div id="status">กำลังเปิดกล้อง… หันกล้องไปที่ Hiro marker</div>
+<div id="status">กำลังเปิดกล้อง… หันกล้องไปที่ Hiro marker</div>
 
-  <div id="buttons">
-    <button id="slimBtn">😎 หน้าผอม</button>
-    <button id="fatBtn">😊 หน้าอ้วน</button>
-  </div>
+<div id="buttons">
+  <button id="poopBtn">💩 สบัดขี้</button>
+  <button id="eatBtn">🍉 กินแตงโม</button>
+</div>
 
-  <a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    renderer="antialias: true; alpha: true"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+<a-scene
+  embedded
+  vr-mode-ui="enabled:false"
+  renderer="antialias:true; alpha:true"
+  arjs="sourceType:webcam; debugUIEnabled:false; detectionMode:mono_and_matrix; matrixCodeType:3x3">
 
-    <a-marker preset="hiro" id="hiroMarker">
-      <!-- ใช้สัดส่วนภาพจริง ไม่ยืดเป็นสี่เหลี่ยม -->
-      <a-image
-        id="face"
-        src="./71066-face-slim.png"
-        position="0 0.67 0"
-        rotation="-90 0 0"
-        width="0.90"
-        height="1.125"
-        material="transparent: true; alphaTest: 0.05;">
-      </a-image>
-    </a-marker>
+  <a-marker preset="hiro" id="hiroMarker">
 
-    <a-entity camera></a-entity>
-  </a-scene>
+    <!-- HIPPO 3D -->
+    <a-entity id="hippo" position="0 0.05 0" rotation="-90 0 0">
 
-  <script>
-    const marker = document.getElementById("hiroMarker");
-    const face = document.getElementById("face");
-    const status = document.getElementById("status");
-    const slimBtn = document.getElementById("slimBtn");
-    const fatBtn = document.getElementById("fatBtn");
+      <!-- Body -->
+      <a-entity
+        geometry="primitive:sphere"
+        material="color:#77707a"
+        scale="1.15 .68 .62"
+        position="0 .78 0">
+      </a-entity>
 
-    marker.addEventListener("markerFound", () => {
-      status.textContent = "พบ Hiro แล้ว 🎉";
-    });
+      <!-- Head -->
+      <a-entity
+        geometry="primitive:sphere"
+        material="color:#817985"
+        scale=".68 .58 .62"
+        position="0 1.25 -.48">
+      </a-entity>
 
-    marker.addEventListener("markerLost", () => {
-      status.textContent = "หันกล้องไปที่ Hiro marker";
-    });
+      <!-- Big snout -->
+      <a-entity
+        geometry="primitive:sphere"
+        material="color:#968d98"
+        scale=".55 .30 .25"
+        position="0 1.13 -.96">
+      </a-entity>
 
-    function changeFace(image, message) {
-      face.setAttribute("src", image);
-      status.textContent = message;
+      <!-- Nostrils -->
+      <a-entity geometry="primitive:sphere" material="color:#29252b"
+        scale=".08 .045 .04" position="-.19 1.18 -1.17"></a-entity>
+      <a-entity geometry="primitive:sphere" material="color:#29252b"
+        scale=".08 .045 .04" position=".19 1.18 -1.17"></a-entity>
 
-      // เด้งเบา ๆ โดยไม่เปลี่ยนอัตราส่วนรูป
-      face.setAttribute("animation__pop",
-        "property: scale; from: 0.92 0.92 1; to: 1 1 1; dur: 220; easing: easeOutBack");
-    }
+      <!-- Eyes -->
+      <a-entity geometry="primitive:sphere" material="color:#111"
+        scale=".075 .075 .075" position="-.27 1.48 -.89"></a-entity>
+      <a-entity geometry="primitive:sphere" material="color:#111"
+        scale=".075 .075 .075" position=".27 1.48 -.89"></a-entity>
 
-    slimBtn.addEventListener("click", () => {
-      changeFace("./71066-face-slim.png", "😎 เปลี่ยนเป็นหน้าผอมแล้ว");
-    });
+      <!-- Eye highlights -->
+      <a-entity geometry="primitive:sphere" material="color:#fff"
+        scale=".022 .022 .022" position="-.25 1.505 -.955"></a-entity>
+      <a-entity geometry="primitive:sphere" material="color:#fff"
+        scale=".022 .022 .022" position=".29 1.505 -.955"></a-entity>
 
-    fatBtn.addEventListener("click", () => {
-      changeFace("./71066-face-fat.png", "😊 เปลี่ยนเป็นหน้าอ้วนแล้ว");
-    });
-  </script>
+      <!-- Ears -->
+      <a-entity geometry="primitive:sphere" material="color:#706975"
+        scale=".16 .13 .10" position="-.48 1.65 -.40"></a-entity>
+      <a-entity geometry="primitive:sphere" material="color:#706975"
+        scale=".16 .13 .10" position=".48 1.65 -.40"></a-entity>
+
+      <!-- Legs -->
+      <a-entity geometry="primitive:cylinder" material="color:#726b76"
+        radius=".17" height=".65" position="-.65 .38 -.22"></a-entity>
+      <a-entity geometry="primitive:cylinder" material="color:#726b76"
+        radius=".17" height=".65" position=".65 .38 -.22"></a-entity>
+      <a-entity geometry="primitive:cylinder" material="color:#726b76"
+        radius=".17" height=".65" position="-.62 .38 .38"></a-entity>
+      <a-entity geometry="primitive:cylinder" material="color:#726b76"
+        radius=".17" height=".65" position=".62 .38 .38"></a-entity>
+
+      <!-- Feet -->
+      <a-entity geometry="primitive:sphere" material="color:#5f5863"
+        scale=".22 .10 .25" position="-.65 .06 -.25"></a-entity>
+      <a-entity geometry="primitive:sphere" material="color:#5f5863"
+        scale=".22 .10 .25" position=".65 .06 -.25"></a-entity>
+
+      <!-- Tail -->
+      <a-entity id="tail" position="0 .82 .66">
+        <a-entity geometry="primitive:cylinder" material="color:#716a75"
+          radius=".055" height=".40" rotation="90 0 0"></a-entity>
+        <a-entity geometry="primitive:sphere" material="color:#5d5661"
+          scale=".13 .09 .13" position="0 0 .21"></a-entity>
+      </a-entity>
+
+      <!-- Smile -->
+      <a-entity geometry="primitive:torus" material="color:#3a333b"
+        radius=".20" radius-tubular=".018"
+        rotation="90 0 0" scale="1 .55 1"
+        position="0 1.06 -1.17"></a-entity>
+
+      <!-- WATERMELON -->
+      <a-entity id="watermelon" position=".95 1.00 -.35">
+        <a-entity geometry="primitive:sphere"
+          material="color:#e94b50"
+          scale=".36 .28 .36"></a-entity>
+        <a-entity geometry="primitive:torus"
+          material="color:#3f9b55"
+          radius=".29" radius-tubular=".055"
+          rotation="90 0 0"
+          position="0 -.17 0"></a-entity>
+        <!-- seeds -->
+        <a-entity geometry="primitive:sphere" material="color:#222"
+          scale=".018 .035 .012" position="-.11 .03 -.34"></a-entity>
+        <a-entity geometry="primitive:sphere" material="color:#222"
+          scale=".018 .035 .012" position=".10 .06 -.34"></a-entity>
+        <a-entity geometry="primitive:sphere" material="color:#222"
+          scale=".018 .035 .012" position="0 -.07 -.35"></a-entity>
+      </a-entity>
+
+      <!-- POOP, initially hidden -->
+      <a-entity id="poop" visible="false" position=".10 .08 .15">
+        <a-entity geometry="primitive:sphere" material="color:#5a351e"
+          scale=".20 .13 .20" position="0 0 0"></a-entity>
+        <a-entity geometry="primitive:sphere" material="color:#704426"
+          scale=".14 .11 .14" position="0 .16 0"></a-entity>
+        <a-entity geometry="primitive:sphere" material="color:#84502b"
+          scale=".08 .08 .08" position="0 .27 0"></a-entity>
+      </a-entity>
+
+    </a-entity>
+  </a-marker>
+
+  <a-entity camera></a-entity>
+</a-scene>
+
+<script>
+const marker = document.getElementById('hiroMarker');
+const hippo = document.getElementById('hippo');
+const tail = document.getElementById('tail');
+const poop = document.getElementById('poop');
+const watermelon = document.getElementById('watermelon');
+const status = document.getElementById('status');
+
+let eating = false;
+
+marker.addEventListener('markerFound', () => {
+  status.textContent = '🦛 พบ Hiro แล้ว! ฮิปโปพร้อมแล้ว';
+});
+
+marker.addEventListener('markerLost', () => {
+  status.textContent = 'หันกล้องไปที่ Hiro marker';
+});
+
+document.getElementById('poopBtn').addEventListener('click', () => {
+  status.textContent = '💩 ฮิปโปกำลังสบัดขี้!';
+
+  poop.setAttribute('visible', true);
+
+  // สะบัดตัวซ้าย-ขวา
+  hippo.setAttribute('animation__shake',
+    'property:rotation; from:-90 -12 0; to:-90 12 0; dir:alternate; loop:3; dur:120');
+
+  // สะบัดหาง
+  tail.setAttribute('animation__tail',
+    'property:rotation; from:0 0 -35; to:0 0 35; dir:alternate; loop:6; dur:100');
+
+  // ขี้เด้งลงพื้น
+  poop.setAttribute('animation__drop',
+    'property:position; from:.10 .75 .15; to:.10 .08 .15; dur:550; easing:easeInQuad');
+
+  setTimeout(() => {
+    status.textContent = '💩 เรียบร้อย! ฮิปโปสบัดขี้แล้ว';
+  }, 900);
+});
+
+document.getElementById('eatBtn').addEventListener('click', () => {
+  if (eating) return;
+  eating = true;
+
+  status.textContent = '🍉 ฮิปโปกำลังกินแตงโม...';
+
+  // แตงโมเคลื่อนเข้าปาก
+  watermelon.setAttribute('animation__eat',
+    'property:position; to:0 1.12 -1.08; dur:900; easing:easeInOutQuad');
+
+  watermelon.setAttribute('animation__scale',
+    'property:scale; to:.15 .15 .15; dur:900; easing:easeInQuad');
+
+  // ฮิปโปขยับหัวเล็กน้อย
+  hippo.setAttribute('animation__head',
+    'property:position; from:0 .05 0; to:0 .10 -.05; dir:alternate; loop:2; dur:450');
+
+  setTimeout(() => {
+    watermelon.setAttribute('visible', false);
+    status.textContent = '😋 หมดแล้ว! ฮิปโปกินแตงโมเรียบร้อย';
+    eating = false;
+  }, 950);
+});
+</script>
 </body>
 </html>
