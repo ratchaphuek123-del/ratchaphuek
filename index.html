@@ -1,60 +1,82 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>AR Hiro Face</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AR Hiro - หน้าผอม / หน้าอ้วน</title>
+
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-    #ui {
-      position: fixed; z-index: 20; left: 0; right: 0; bottom: 20px;
-      display: flex; justify-content: center; gap: 12px;
-      pointer-events: none;
-    }
-    button {
-      pointer-events: auto; border: 0; border-radius: 999px;
-      padding: 13px 24px; font-size: 18px; font-weight: 700;
-      color: #fff; background: rgba(20,20,20,.78);
-      box-shadow: 0 5px 20px rgba(0,0,0,.3);
-    }
-    button:active { transform: scale(.96); }
+
     #status {
-      position: fixed; z-index: 20; top: 16px; left: 50%;
-      transform: translateX(-50%); padding: 9px 15px;
-      border-radius: 12px; color: #fff; background: rgba(0,0,0,.55);
-      font-size: 14px; text-align: center; white-space: nowrap;
+      position: fixed;
+      z-index: 20;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      background: rgba(0,0,0,.60);
+      padding: 9px 15px;
+      border-radius: 14px;
+      font-size: 14px;
+      white-space: nowrap;
     }
+
+    #buttons {
+      position: fixed;
+      z-index: 20;
+      left: 0;
+      right: 0;
+      bottom: 22px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 24px;
+      color: white;
+      background: rgba(20,20,20,.82);
+      font-size: 17px;
+      font-weight: bold;
+      box-shadow: 0 5px 18px rgba(0,0,0,.3);
+    }
+
+    button:active { transform: scale(.96); }
   </style>
 </head>
 
 <body>
   <div id="status">กำลังเปิดกล้อง… หันกล้องไปที่ Hiro marker</div>
 
-  <div id="ui">
-    <button id="smileBtn">😄 ยิ้ม</button>
-    <button id="sleepBtn">😴 หลับ</button>
+  <div id="buttons">
+    <button id="slimBtn">😎 หน้าผอม</button>
+    <button id="fatBtn">😊 หน้าอ้วน</button>
   </div>
 
   <a-scene
     embedded
     vr-mode-ui="enabled: false"
     renderer="antialias: true; alpha: true"
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-  >
-    <a-marker preset="hiro" id="hiroMarker" emitevents="true">
-      <!-- รูปคน: ไฟล์รูปอยู่โฟลเดอร์เดียวกับ index.html -->
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+
+    <a-marker preset="hiro" id="hiroMarker">
+      <!-- ใช้สัดส่วนภาพจริง ไม่ยืดเป็นสี่เหลี่ยม -->
       <a-image
         id="face"
-        src="./71066-removebg-preview.png"
-        position="0 0.65 0"
+        src="./71066-face-slim.png"
+        position="0 0.67 0"
         rotation="-90 0 0"
-        width="1.15"
-        height="1.15"
-        material="transparent: true; alphaTest: 0.05;"
-      ></a-image>
+        width="0.90"
+        height="1.125"
+        material="transparent: true; alphaTest: 0.05;">
+      </a-image>
     </a-marker>
 
     <a-entity camera></a-entity>
@@ -64,48 +86,32 @@
     const marker = document.getElementById("hiroMarker");
     const face = document.getElementById("face");
     const status = document.getElementById("status");
-    const smileBtn = document.getElementById("smileBtn");
-    const sleepBtn = document.getElementById("sleepBtn");
-
-    let isSleep = false;
-    let baseY = 0.65;
+    const slimBtn = document.getElementById("slimBtn");
+    const fatBtn = document.getElementById("fatBtn");
 
     marker.addEventListener("markerFound", () => {
-      status.textContent = "พบ Hiro แล้ว! 🎉";
-      status.style.background = "rgba(0,130,70,.75)";
+      status.textContent = "พบ Hiro แล้ว 🎉";
     });
 
     marker.addEventListener("markerLost", () => {
-      status.textContent = "ไม่พบ Hiro — หันกล้องไปที่ marker";
-      status.style.background = "rgba(0,0,0,.55)";
+      status.textContent = "หันกล้องไปที่ Hiro marker";
     });
 
-    function animateFace(scaleX, scaleY, y) {
-      face.setAttribute("animation__scale",
-        `property: scale; to: ${scaleX} ${scaleY} 1; dur: 220; easing: easeOutQuad`);
-      face.setAttribute("animation__pos",
-        `property: position; to: 0 ${y} 0; dur: 220; easing: easeOutQuad`);
+    function changeFace(image, message) {
+      face.setAttribute("src", image);
+      status.textContent = message;
+
+      // เด้งเบา ๆ โดยไม่เปลี่ยนอัตราส่วนรูป
+      face.setAttribute("animation__pop",
+        "property: scale; from: 0.92 0.92 1; to: 1 1 1; dur: 220; easing: easeOutBack");
     }
 
-    smileBtn.addEventListener("click", () => {
-      isSleep = false;
-      // ทำเอฟเฟกต์เหมือนยิ้ม: ขยายเล็กน้อยและเด้งขึ้น
-      animateFace(1.08, 0.92, 0.69);
-      setTimeout(() => animateFace(1, 1, baseY), 500);
-      status.textContent = "😄 ยิ้มแล้ว!";
+    slimBtn.addEventListener("click", () => {
+      changeFace("./71066-face-slim.png", "😎 เปลี่ยนเป็นหน้าผอมแล้ว");
     });
 
-    sleepBtn.addEventListener("click", () => {
-      isSleep = !isSleep;
-
-      if (isSleep) {
-        // หรี่/แบนรูปเล็กน้อยเพื่อสื่อว่าหลับ
-        animateFace(1.03, 0.72, 0.57);
-        status.textContent = "😴 หลับแล้ว";
-      } else {
-        animateFace(1, 1, baseY);
-        status.textContent = "👀 ตื่นแล้ว";
-      }
+    fatBtn.addEventListener("click", () => {
+      changeFace("./71066-face-fat.png", "😊 เปลี่ยนเป็นหน้าอ้วนแล้ว");
     });
   </script>
 </body>
